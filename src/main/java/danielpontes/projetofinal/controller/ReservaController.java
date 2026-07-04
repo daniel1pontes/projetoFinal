@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/reservas")
 public class ReservaController {
@@ -22,6 +24,17 @@ public class ReservaController {
     public ResponseEntity<ReservaResponseDTO> reservar(@RequestBody @Valid ReservaRequestDTO dados, @AuthenticationPrincipal Usuario usuario) {
         var response = reservaService.reservar(dados, usuario);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/minhas")
+    public ResponseEntity<List<ReservaResponseDTO>> minhasReservas(@AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(reservaService.listarMinhasReservas(usuario));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelar(@PathVariable Long id, @AuthenticationPrincipal Usuario usuario) {
+        reservaService.cancelarReserva(id, usuario);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/resumo")

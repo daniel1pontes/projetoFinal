@@ -9,10 +9,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
-    
+
     @Query("SELECT r FROM Reserva r WHERE r.espaco.id = :espacoId " +
-           "AND (:inicio < r.dataHoraFim AND :fim > r.dataHoraInicio)")
-    List<Reserva> findOverlappingReservations(@Param("espacoId") Long espacoId, 
-                                              @Param("inicio") LocalDateTime inicio, 
+            "AND (:inicio < r.dataHoraFim AND :fim > r.dataHoraInicio)")
+    List<Reserva> findOverlappingReservations(@Param("espacoId") Long espacoId,
+                                              @Param("inicio") LocalDateTime inicio,
                                               @Param("fim") LocalDateTime fim);
+
+    List<Reserva> findByUsuarioIdOrderByDataHoraInicioDesc(Long usuarioId);
 }

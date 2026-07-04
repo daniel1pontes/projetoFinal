@@ -1,5 +1,6 @@
 package danielpontes.projetofinal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -25,6 +26,7 @@ public class Filial {
 
     private String telefone;
 
+    @JsonIgnore // Adicionado para quebrar a referência circular
     @OneToMany(mappedBy = "filial", cascade = CascadeType.ALL)
     private List<Espaco> espacos;
 }

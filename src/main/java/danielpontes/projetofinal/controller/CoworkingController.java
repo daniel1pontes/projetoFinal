@@ -52,13 +52,16 @@ public class CoworkingController {
         espaco.setTipo(dados.tipo());
         espaco.setPrecoHora(dados.precoHora());
         espaco.setFilial(filial);
-        
+
         espacoRepository.save(espaco);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/espacos")
-    public ResponseEntity<List<Espaco>> listarEspacos() {
+    public ResponseEntity<List<Espaco>> listarEspacos(@RequestParam(required = false) Long filialId) {
+        if (filialId != null) {
+            return ResponseEntity.ok(espacoRepository.findByFilialId(filialId));
+        }
         return ResponseEntity.ok(espacoRepository.findAll());
     }
 }

@@ -5,11 +5,13 @@ import danielpontes.projetofinal.dto.ReservaResponseDTO;
 import danielpontes.projetofinal.dto.ResumoReservaDTO;
 import danielpontes.projetofinal.exception.ValidacaoException;
 import danielpontes.projetofinal.model.Reserva;
+import danielpontes.projetofinal.model.UserRole;
 import danielpontes.projetofinal.model.Usuario;
 import danielpontes.projetofinal.repository.EspacoRepository;
 import danielpontes.projetofinal.repository.ReservaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -54,21 +56,41 @@ public class ReservaService {
 
         reservaRepository.save(reserva);
 
-        return new ReservaResponseDTO(
-                reserva.getId(),
-                usuario.getNome(),
-                espaco.getNome(),
-                reserva.getDataHoraInicio(),
-                reserva.getDataHoraFim(),
-                reserva.getValorTotal()
-        );
+        return toResponseDTO(reserva);
+    }
+
+    /**
+     * Lista as reservas feitas pelo usuário autenticado, da mais recente para a mais antiga.
+     */
+    public List<ReservaResponseDTO> listarMinhasReservas(Usuario usuario) {
+        return reservaRepository.findByUsuarioIdOrderByDataHoraInicioDesc(usuario.getId())
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    /**
+     * Cancela uma reserva. Apenas o dono da reserva ou um ADMIN podem cancelá-la.
+     */
+    public void cancelarReserva(Long id, Usuario usuarioLogado) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva não encontrada"));
+
+        boolean isDono = reserva.getUsuario().getId().equals(usuarioLogado.getId());
+        boolean isAdmin = usuarioLogado.getRole() == UserRole.ADMIN;
+
+        if (!isDono && !isAdmin) {
+            throw new AccessDeniedException("Você não tem permissão para cancelar esta reserva.");
+        }
+
+        reservaRepository.delete(reserva);
     }
 
     public ResumoReservaDTO obterResumo() {
         List<Reserva> reservas = reservaRepository.findAll();
 
         long totalReservas = reservas.size();
-        
+
         Map<String, Long> reservasPorTipo = reservas.stream()
                 .collect(Collectors.groupingBy(r -> r.getEspaco().getTipo().name(), Collectors.counting()));
 
@@ -82,5 +104,16 @@ public class ReservaService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new ResumoReservaDTO(totalReservas, reservasPorTipo, duracaoMedia, receitaTotal);
+    }
+
+    private ReservaResponseDTO toResponseDTO(Reserva reserva) {
+        return new ReservaResponseDTO(
+                reserva.getId(),
+                reserva.getUsuario().getNome(),
+                reserva.getEspaco().getNome(),
+                reserva.getDataHoraInicio(),
+                reserva.getDataHoraFim(),
+                reserva.getValorTotal()
+        );
     }
 }

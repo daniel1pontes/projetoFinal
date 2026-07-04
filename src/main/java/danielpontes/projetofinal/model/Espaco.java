@@ -1,5 +1,6 @@
 package danielpontes.projetofinal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ public class Espaco {
     @Column(nullable = false)
     private BigDecimal precoHora;
 
+    @JsonIgnore // Adicionado para quebrar a referência circular
     @ManyToOne
     @JoinColumn(name = "filial_id")
     private Filial filial;
